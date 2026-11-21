@@ -1,0 +1,61 @@
+name: Render Spanish Shorts
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "İspanyolca video konusu (opsiyonel)"
+        required: false
+        default: "datos curiosos sorprendentes"
+  repository_dispatch:
+    types: [render-short]
+
+jobs:
+  build-and-send:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Depoyu indir
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Python kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Sistem bağımlılıklarını kur (ffmpeg vb.)
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Node paketlerini yükle
+        run: npm ci
+
+      - name: Python paketlerini yükle
+        run: pip install google-genai requests edge-tts pillow
+
+      - name: Senaryo, ses ve arka plan videosu üret
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          VIDEO_TOPIC: ${{ github.event.inputs.topic || github.event.client_payload.topic || 'datos curiosos sorprendentes' }}
+        run: python scripts/generate_assets.py
+
+      - name: Remotion ile MP4 videoyu render al
+        run: npx remotion render ShortsVideo out/short.mp4
+
+      - name: Videoyu Telegram'a gönder
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendVideo" \
+            -F chat_id="${CHAT_ID}" \
+            -F video="@out/short.mp4" \
+            -F caption="Yeni İspanyolca Shorts videon hazır!"
