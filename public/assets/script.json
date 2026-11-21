@@ -1,0 +1,15 @@
+{
+  "title": "Saludo en México",
+  "lines": [
+    {
+      "es": "¡Hola! ¿Cómo andas?",
+      "tr": "Selam! Nasılsın?",
+      "audio": "line_1.mp3"
+    },
+    {
+      "es": "Aquí todo tranquilo, ¿y tú?",
+      "tr": "Burada her şey sakin, ya sen?",
+      "audio": "line_2.mp3"
+    }
+  ]
+}
