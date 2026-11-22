@@ -119,7 +119,46 @@ def download_pixabay_vertical_video(query: str, output_path: str) -> bool:
                 f.write(chunk)
     return True
 
+def download_multiple_pixabay_videos(query: str, output_dir: str, count: int = 3) -> list[str]:
+    url = "https://pixabay.com/api/videos/"
+    params = {"key": PIXABAY_API_KEY, "q": query, "per_page": 15}
+    resp = requests.get(url, params=params, timeout=30)
+    resp.raise_for_status()
+    hits = resp.json().get("hits", [])
 
+    if not hits:
+        params["q"] = "abstract motion"
+        resp = requests.get(url, params=params, timeout=30)
+        resp.raise_for_status()
+        hits = resp.json().get("hits", [])
+
+    urls: list[str] = []
+    for hit in hits:
+        videos = hit.get("videos", {})
+        for quality in ["large", "medium", "small"]:
+            v = videos.get(quality)
+            if v and v.get("url"):
+                width = v.get("width", 0)
+                height = v.get("height", 0)
+                if height >= width and v["url"] not in urls:
+                    urls.append(v["url"])
+                    break
+        if len(urls) >= count:
+            break
+
+    saved_files: list[str] = []
+    for idx, u in enumerate(urls[:count], start=1):
+        filename = f"background_{idx}.mp4"
+        full_path = os.path.join(output_dir, filename)
+        r = requests.get(u, stream=True, timeout=60)
+        r.raise_for_status()
+        with open(full_path, "wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+        saved_files.append(f"assets/{filename}")
+
+    return saved_files
 def main():
     topic = os.environ.get("VIDEO_TOPIC", "habitos para vencer la procrastinacion")
     print("1. Gemini ile İspanyolca senaryo üretiliyor...")
@@ -138,6 +177,7 @@ def main():
                 "title": payload.get("title", "Short"),
                 "script": script_text,
                 "words": words,
+                "backgrounds": backgrounds,
             },
             f,
             ensure_ascii=False,
@@ -147,12 +187,11 @@ def main():
     audio_path = os.path.join(OUTPUT_DIR, "voiceover.mp3")
     print("2. Edge-TTS ile seslendirme oluşturuluyor...")
     asyncio.run(generate_voiceover(script_text, audio_path))
+backgrounds = download_multiple_pixabay_videos("motivation", OUTPUT_DIR, count=3)
+if not backgrounds:
+        raise RuntimeError("Pixabay üzerinde uygun dikey video bulunamadı.")
 
-    video_path = os.path.join(OUTPUT_DIR, "background.mp4")
-    print("3. Pixabay'den arka plan videosu indiriliyor...")
-    download_pixabay_vertical_video(search_query, video_path)
-
-    print("Tüm varlıklar başarıyla hazırlandı!")
+print("Tüm varlıklar başarıyla hazırlandı!")
 
 
 if __name__ == "__main__":
