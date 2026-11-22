@@ -71,8 +71,8 @@ async def generate_voiceover(text: str, output_path: str, voice: str = "es-MX-Da
             elif chunk["type"] == "WordBoundary":
                 timings.append({
                     "text": chunk["text"],
-                    "start": chunk["offset"] / 10_000_000,
-                    "end": (chunk["offset"] + chunk["duration"]) / 10_000_000,
+                    "start": round(chunk["offset"] / 10_000_000, 3),
+                    "end": round((chunk["offset"] + chunk["duration"]) / 10_000_000, 3),
                 })
     return timings
 
@@ -184,6 +184,11 @@ def main():
     print(f"Pixabay arama kelimesi: {search_query}")
 
     words = script_text.split()
+    audio_path = os.path.join(OUTPUT_DIR, "voiceover.mp3")
+    print("2. Edge-TTS ile seslendirme oluşturuluyor...")
+    word_timings = asyncio.run(generate_voiceover(script_text, audio_path))
+    audio_duration_sec = word_timings[-1]["end"] if word_timings else 0.0
+
     meta_path = os.path.join(OUTPUT_DIR, "script.json")
     with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(
@@ -191,16 +196,14 @@ def main():
                 "title": payload.get("title", "Short"),
                 "script": script_text,
                 "words": words,
+                "wordTimings": word_timings,
+                "audioDurationSec": audio_duration_sec,
                 "backgrounds": backgrounds,
             },
             f,
             ensure_ascii=False,
             indent=2,
         )
-
-    audio_path = os.path.join(OUTPUT_DIR, "voiceover.mp3")
-    print("2. Edge-TTS ile seslendirme oluşturuluyor...")
-    asyncio.run(generate_voiceover(script_text, audio_path))
 backgrounds = download_multiple_pixabay_videos("motivation", OUTPUT_DIR, count=3)
 if not backgrounds:
         raise RuntimeError("Pixabay üzerinde uygun dikey video bulunamadı.")
