@@ -22,6 +22,7 @@ export const ShortsVideo: React.FC = () => {
       : durationInFrames * 0.92;
   const usableFrames = Math.max(effectiveAudioFrames, totalWords);
   const framesPerWord = usableFrames / totalWords;
+  const voiceOffsetFrames = Math.round(fps * 1);
   const activeFrame = Math.max(0, frame - voiceOffsetFrames);
   const activeIndex = Math.min(
     Math.floor(activeFrame / framesPerWord),
