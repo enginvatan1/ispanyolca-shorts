@@ -6,7 +6,7 @@ on:
       topic:
         description: "İspanyolca video konusu (opsiyonel)"
         required: false
-        default: "datos curiosos sorprendentes"
+        default: "habitos para vencer la procrastinacion"
   repository_dispatch:
     types: [render-short]
 
@@ -44,7 +44,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
-          VIDEO_TOPIC: ${{ github.event.inputs.topic || github.event.client_payload.topic || 'datos curiosos sorprendentes' }}
+          VIDEO_TOPIC: ${{ github.event.inputs.topic || github.event.client_payload.topic || 'habitos para vencer la procrastinacion' }}
         run: python scripts/generate_assets.py
 
       - name: Remotion ile MP4 videoyu render al

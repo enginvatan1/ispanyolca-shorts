@@ -110,7 +110,7 @@ def download_pixabay_vertical_video(query: str, output_path: str) -> bool:
 
 
 def main():
-    topic = os.environ.get("VIDEO_TOPIC", "datos curiosos que no sabías")
+    topic = os.environ.get("VIDEO_TOPIC", "habitos para vencer la procrastinacion")
     print("1. Gemini ile İspanyolca senaryo üretiliyor...")
     payload = generate_spanish_script(topic=topic)
 

@@ -15,20 +15,21 @@ export const ShortsVideo: React.FC = () => {
 
   const words: string[] = (scriptData as { words?: string[] }).words || ["Hola"];
   const totalWords = Math.max(words.length, 1);
-
+  const voiceOffsetFrames = Math.round(fps * 1);
   const usableFrames = Math.max(durationInFrames * 0.92, totalWords);
   const framesPerWord = usableFrames / totalWords;
-  const activeIndex = Math.min(
-    Math.floor(frame / framesPerWord),
-    totalWords - 1
-  );
+  const activeFrame = Math.max(0, frame - voiceOffsetFrames);
+const activeIndex = Math.min(
+  Math.floor(activeFrame / framesPerWord),
+  totalWords - 1
+);
 
   const groupSize = 4;
   const currentGroupIndex = Math.floor(activeIndex / groupSize);
   const startWord = currentGroupIndex * groupSize;
   const visibleWords = words.slice(startWord, startWord + groupSize);
 
-  const wordLocalFrame = frame - activeIndex * framesPerWord;
+  const wordLocalFrame = activeFrame - activeIndex * framesPerWord;
   const jumpOffset =
     wordLocalFrame >= 0 && wordLocalFrame < 6
       ? -Math.sin((wordLocalFrame / 6) * Math.PI) * 14
