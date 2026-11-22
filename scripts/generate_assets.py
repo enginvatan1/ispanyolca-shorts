@@ -49,7 +49,18 @@ def generate_spanish_script(topic: str = "curiosidades sorprendentes") -> dict:
 
 async def generate_voiceover(text: str, output_path: str, voice: str = "es-MX-DaliaNeural"):
     communicate = edge_tts.Communicate(text=text, voice=voice)
-    await communicate.save(output_path)
+    timings = []
+    with open(output_path, "wb") as f:
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                f.write(chunk["data"])
+            elif chunk["type"] == "WordBoundary":
+                timings.append({
+                    "text": chunk["text"],
+                    "start": chunk["offset"] / 10_000_000,
+                    "end": (chunk["offset"] + chunk["duration"]) / 10_000_000,
+                })
+    return timings
 
 
 def download_pixabay_vertical_video(query: str, output_path: str) -> bool:
