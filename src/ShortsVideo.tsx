@@ -13,7 +13,7 @@ export const ShortsVideo: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
 
-  const words: string[] = scriptData.words || ["Hola"];
+  const words: string[] = (scriptData as { words?: string[] }).words || ["Hola"];
   const totalWords = Math.max(words.length, 1);
 
   const usableFrames = Math.max(durationInFrames * 0.92, totalWords);
