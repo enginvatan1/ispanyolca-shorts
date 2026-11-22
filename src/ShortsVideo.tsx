@@ -15,20 +15,28 @@ export const ShortsVideo: React.FC = () => {
 
   const words: string[] = (scriptData as { words?: string[] }).words || ["Hola"];
   const totalWords = Math.max(words.length, 1);
- const audioDurationSec = (scriptData as { audioDurationSec?: number }).audioDurationSec;
-  const fallbackFrames = Math.round((totalWords / 2.1) * fps);
-  const effectiveAudioFrames =
-    typeof audioDurationSec === "number" && audioDurationSec > 0
-      ? Math.round((audioDurationSec * 1.06) * fps)
-      : Math.min(durationInFrames, Math.max(fallbackFrames, totalWords));
-  const usableFrames = Math.max(effectiveAudioFrames, totalWords);
-  const framesPerWord = usableFrames / totalWords;
-  const voiceOffsetFrames = Math.round(fps * 1);
-  const activeFrame = Math.max(0, frame - voiceOffsetFrames);
-  const activeIndex = Math.min(
-    Math.floor(activeFrame / framesPerWord),
-    totalWords - 1
-  );
+ const subtitleOffsetSec = 0.3; // Alt yazı geriden geliyorsa artırın (ör. 0.5), önden gidiyorsa eksi yapın (ör. -0.3)
+const subtitleOffsetSec = 0.3;
+  const currentSec = Math.max(0, frame / fps + subtitleOffsetSec);
+
+  const wordTimings = (scriptData as { wordTimings?: { start: number }[] }).wordTimings;
+
+  let activeIndex = 0;
+  if (Array.isArray(wordTimings) && wordTimings.length > 0) {
+    for (let i = 0; i < wordTimings.length; i++) {
+      if (currentSec >= wordTimings[i].start) {
+        activeIndex = i;
+      }
+    }
+  } else {
+    const estDurationSec =
+      typeof (scriptData as { audioDurationSec?: number }).audioDurationSec === "number" &&
+      (scriptData as { audioDurationSec?: number }).audioDurationSec! > 0
+        ? (scriptData as { audioDurationSec?: number }).audioDurationSec!
+        : durationInFrames / fps;
+    const secPerWord = estDurationSec / totalWords;
+    activeIndex = Math.min(Math.floor(currentSec / secPerWord), totalWords - 1);
+  }
 
   const groupSize = 4;
   const currentGroupIndex = Math.floor(activeIndex / groupSize);
