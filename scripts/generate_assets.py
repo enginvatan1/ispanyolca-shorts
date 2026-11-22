@@ -1,9 +1,11 @@
-import asyncio
-import json
 import os
+import json
+import time
+import asyncio
 import requests
 import edge_tts
 from google import genai
+from google.genai import types
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 PIXABAY_API_KEY = os.environ.get("PIXABAY_API_KEY")
@@ -18,24 +20,37 @@ def generate_spanish_script(topic: str = "curiosidades sorprendentes") -> dict:
     client = genai.Client(api_key=GEMINI_API_KEY)
 
     prompt = f"""
-    Eres un creador de contenido viral para YouTube Shorts en español de México.
-    Tema: {topic}
+Eres un creador de contenido viral para YouTube Shorts en español de México.
+Tema: {topic}
 
-    Crea un guion corto de unos 35-45 segundos (aproximadamente 85-110 palabras) en español natural de México.
-    Además, dame 1 palabra o frase corta en inglés (máximo 2 palabras) para buscar un video vertical de fondo en Pixabay.
+Crea un guion corto de unos 35-45 segundos (aproximadamente 85-110 palabras) en español natural de México.
+Además, dame 1 palabra o frase corta en inglés (máximo 2 palabras) para buscar un video vertical de fondo.
 
-    Responde ÚNICAMENTE con un JSON válido con esta estructura exacta:
-    {{
-      "title": "Título llamativo corto",
-      "search_query": "night city",
-      "script": "Texto completo de la narración en español."
-    }}
-    """
+Responde ÚNICAMENTE con un JSON válido con esta estructura exacta:
+{{
+  "title": "Título llamativo corto",
+  "search_query": "night city",
+  "script": "Texto completo de la narración en español."
+}}
+"""
 
-    response = client.models.generate_content(
-        model="gemini-3.5-flash",
-        contents=prompt,
-    )
+    for attempt in range(4):
+        try:
+            response = client.models.generate_content(
+                model="gemini-3.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                ),
+            )
+            break
+        except Exception as e:
+            if attempt < 3 and ("503" in str(e) or "UNAVAILABLE" in str(e)):
+                wait_sec = (attempt + 1) * 5
+                print(f"Gemini yoğun (503), {wait_sec} sn sonra tekrar deneniyor...")
+                time.sleep(wait_sec)
+            else:
+                raise
 
     raw_text = response.text.strip()
     if raw_text.startswith("```"):
@@ -43,7 +58,6 @@ def generate_spanish_script(topic: str = "curiosidades sorprendentes") -> dict:
         if raw_text.startswith("json"):
             raw_text = raw_text[4:]
     raw_text = raw_text.strip()
-
     return json.loads(raw_text)
 
 
