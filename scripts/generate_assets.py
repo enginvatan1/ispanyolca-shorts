@@ -33,7 +33,7 @@ def generate_spanish_script(topic: str = "curiosidades sorprendentes") -> dict:
     """
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3-flash",
         contents=prompt,
     )
 
@@ -146,4 +146,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
