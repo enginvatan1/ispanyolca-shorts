@@ -55,7 +55,16 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
         run: |
+          CAPTION=$(python3 -c '
+          import json
+          with open("public/assets/script.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+          title = data.get("title", "").strip()
+          desc = data.get("description", "").strip()
+          text = f"{title}\n\n{desc}".strip()
+          print(text[:1000])
+          ')
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendVideo" \
             -F chat_id="${CHAT_ID}" \
             -F video="@out/short.mp4" \
-            -F caption="Yeni İspanyolca Shorts videon hazır!"
+            -F caption="$CAPTION"
