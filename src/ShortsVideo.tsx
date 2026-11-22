@@ -51,11 +51,20 @@ const jumpOffset =
     ? -Math.sin((wordLocalFrame / 6) * Math.PI) * 14
     : 0;
   const currentTimeSec = (frame / fps).toFixed(1);
+const backgrounds =
+    (scriptData as { backgrounds?: string[] }).backgrounds &&
+    (scriptData as { backgrounds?: string[] }).backgrounds!.length > 0
+      ? (scriptData as { backgrounds?: string[] }).backgrounds!
+      : ["assets/background_1.mp4"];
 
+  const segmentLength = Math.max(1, Math.ceil(durationInFrames / backgrounds.length));
+  const bgIndex = Math.min(Math.floor(frame / segmentLength), backgrounds.length - 1);
   return (
     <AbsoluteFill style={{ backgroundColor: "#000000" }}>
       <OffthreadVideo
-        src={staticFile("assets/background.mp4")}
+        key={backgrounds[bgIndex]}
+        src={staticFile(backgrounds[bgIndex])}
+        startFrom={0}
         style={{
           width: "100%",
           height: "100%",
