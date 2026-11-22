@@ -30,6 +30,7 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura exacta:
 {{
   "title": "Título llamativo corto",
   "search_query": "night city",
+  "description": "Resumen breve de 1-2 frases y 4 hashtags como #EfectoDopamina #Motivacion #Habitos #Shorts",
   "script": "Texto completo de la narración en español."
 }}
 """
@@ -196,6 +197,7 @@ def main():
                 "title": payload.get("title", "Short"),
                 "script": script_text,
                 "words": words,
+                "description": payload.get("description") or f"{payload.get('title', 'Efecto Dopamina')} — #EfectoDopamina #Motivacion #Habitos #Shorts",
                 "wordTimings": word_timings,
                 "audioDurationSec": audio_duration_sec,
                 "backgrounds": backgrounds,
