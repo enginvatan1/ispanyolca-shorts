@@ -15,7 +15,7 @@ export const ShortsVideo: React.FC = () => {
 
   const words: string[] = (scriptData as { words?: string[] }).words || ["Hola"];
   const totalWords = Math.max(words.length, 1);
-  const voiceOffsetFrames = Math.round(fps * 1);
+  const voiceOffsetFrames = Math.round(fps * 1.5);
   const usableFrames = Math.max(durationInFrames * 0.92, totalWords);
   const framesPerWord = usableFrames / totalWords;
   const activeFrame = Math.max(0, frame - voiceOffsetFrames);
