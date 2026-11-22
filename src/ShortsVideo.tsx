@@ -15,8 +15,7 @@ export const ShortsVideo: React.FC = () => {
 
   const words: string[] = (scriptData as { words?: string[] }).words || ["Hola"];
   const totalWords = Math.max(words.length, 1);
- const subtitleOffsetSec = 0.3; // Alt yazı geriden geliyorsa artırın (ör. 0.5), önden gidiyorsa eksi yapın (ör. -0.3)
-const subtitleOffsetSec = 0.3;
+ const subtitleOffsetSec = 0.3;
   const currentSec = Math.max(0, frame / fps + subtitleOffsetSec);
 
   const wordTimings = (scriptData as { wordTimings?: { start: number }[] }).wordTimings;
@@ -43,12 +42,14 @@ const subtitleOffsetSec = 0.3;
   const startWord = currentGroupIndex * groupSize;
   const visibleWords = words.slice(startWord, startWord + groupSize);
 
-  const wordLocalFrame = activeFrame - activeIndex * framesPerWord;
-  const jumpOffset =
+  const wordLocalFrame = currentSec * fps - activeIndex * 8;
     wordLocalFrame >= 0 && wordLocalFrame < 6
       ? -Math.sin((wordLocalFrame / 6) * Math.PI) * 14
       : 0;
-
+const jumpOffset =
+  wordLocalFrame >= 0 && wordLocalFrame < 6
+    ? -Math.sin((wordLocalFrame / 6) * Math.PI) * 14
+    : 0;
   const currentTimeSec = (frame / fps).toFixed(1);
 
   return (
