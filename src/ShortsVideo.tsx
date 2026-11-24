@@ -20,10 +20,10 @@ const audioDurationSec = (scriptData as { audioDurationSec?: number }).audioDura
     typeof audioDurationSec === "number" && audioDurationSec > 0
       ? audioDurationSec
       : durationInFrames / fps;
-  const subtitleOffsetSec = 0.12;
+  const subtitleOffsetSec = -0.15;
   const currentSec = Math.min(
     maxAudioSec,
-    Math.max(0, frame / fps + subtitleOffsetSec)
+    Math.max(0, frame / fps - subtitleOffsetSec)
   );
 
   const wordTimings = (scriptData as { wordTimings?: { start: number }[] }).wordTimings;
