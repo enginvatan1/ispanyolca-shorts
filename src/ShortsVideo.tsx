@@ -15,8 +15,16 @@ export const ShortsVideo: React.FC = () => {
 
   const words: string[] = (scriptData as { words?: string[] }).words || ["Hola"];
   const totalWords = Math.max(words.length, 1);
- const subtitleOffsetSec = 0.3;
-  const currentSec = Math.max(0, frame / fps + subtitleOffsetSec);
+const audioDurationSec = (scriptData as { audioDurationSec?: number }).audioDurationSec;
+  const maxAudioSec =
+    typeof audioDurationSec === "number" && audioDurationSec > 0
+      ? audioDurationSec
+      : durationInFrames / fps;
+  const subtitleOffsetSec = 0.12;
+  const currentSec = Math.min(
+    maxAudioSec,
+    Math.max(0, frame / fps + subtitleOffsetSec)
+  );
 
   const wordTimings = (scriptData as { wordTimings?: { start: number }[] }).wordTimings;
 
@@ -28,13 +36,11 @@ export const ShortsVideo: React.FC = () => {
       }
     }
   } else {
-    const estDurationSec =
-      typeof (scriptData as { audioDurationSec?: number }).audioDurationSec === "number" &&
-      (scriptData as { audioDurationSec?: number }).audioDurationSec! > 0
-        ? (scriptData as { audioDurationSec?: number }).audioDurationSec!
-        : durationInFrames / fps;
-    const secPerWord = estDurationSec / totalWords;
-    activeIndex = Math.min(Math.floor(currentSec / secPerWord), totalWords - 1);
+    const secPerWord = maxAudioSec / totalWords;
+    activeIndex = Math.min(
+      Math.floor(currentSec / secPerWord),
+      totalWords - 1
+    );
   }
 
   const groupSize = 4;
