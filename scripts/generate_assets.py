@@ -135,19 +135,35 @@ def download_pixabay_vertical_video(query: str, output_path: str) -> bool:
     return True
 
 def download_multiple_pixabay_videos(query: str, output_dir: str, count: int = 3) -> list[str]:
+    import random
+
     url = "https://pixabay.com/api/videos/"
-    params = {"key": PIXABAY_API_KEY, "q": query, "per_page": 15}
+    queries = [q for q in [query, "motivation", "abstract motion", "dark aesthetic", "focus mindset"] if q]
+    chosen_query = random.choice(queries)
+    page = random.randint(1, 3)
+
+    params = {
+        "key": PIXABAY_API_KEY,
+        "q": chosen_query,
+        "per_page": 20,
+        "page": page,
+    }
     resp = requests.get(url, params=params, timeout=30)
     resp.raise_for_status()
     hits = resp.json().get("hits", [])
 
     if not hits:
         params["q"] = "abstract motion"
+        params["page"] = 1
         resp = requests.get(url, params=params, timeout=30)
         resp.raise_for_status()
         hits = resp.json().get("hits", [])
 
-    urls: list[str] = []
+    if not hits:
+        raise RuntimeError("Pixabay üzerinde uygun dikey video bulunamadı.")
+
+    random.shuffle(hits)
+    urls = []
     for hit in hits:
         videos = hit.get("videos", {})
         for quality in ["large", "medium", "small"]:
@@ -161,19 +177,33 @@ def download_multiple_pixabay_videos(query: str, output_dir: str, count: int = 3
         if len(urls) >= count:
             break
 
-    saved_files: list[str] = []
-    for idx, u in enumerate(urls[:count], start=1):
+    if not urls:
+        for hit in hits:
+            videos = hit.get("videos", {})
+            for quality in ["large", "medium", "small"]:
+                v = videos.get(quality)
+                if v and v.get("url") and v["url"] not in urls:
+                    urls.append(v["url"])
+                    break
+            if len(urls) >= count:
+                break
+
+    if not urls:
+        raise RuntimeError("İndirilebilir video bağlantısı bulunamadı.")
+
+    downloaded_files = []
+    for idx, video_url in enumerate(urls[:count], start=1):
         filename = f"background_{idx}.mp4"
         full_path = os.path.join(output_dir, filename)
-        r = requests.get(u, stream=True, timeout=60)
-        r.raise_for_status()
+        video_resp = requests.get(video_url, stream=True, timeout=60)
+        video_resp.raise_for_status()
         with open(full_path, "wb") as f:
-            for chunk in r.iter_content(chunk_size=8192):
+            for chunk in video_resp.iter_content(chunk_size=8192):
                 if chunk:
                     f.write(chunk)
-        saved_files.append(f"assets/{filename}")
+        downloaded_files.append(f"assets/{filename}")
 
-    return saved_files
+    return downloaded_files
 def main():
     topic = os.environ.get("VIDEO_TOPIC", "habitos para vencer la procrastinacion")
     print("1. Gemini ile İspanyolca senaryo üretiliyor...")
