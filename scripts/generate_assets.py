@@ -47,8 +47,8 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura exacta:
             )
             break
         except Exception as e:
-            if attempt < 3 and ("503" in str(e) or "UNAVAILABLE" in str(e)):
-                wait_sec = (attempt + 1) * 5
+            if attempt < 6 and ("503" in str(e) or "UNAVAILABLE" in str(e)):
+                wait_sec = (attempt + 1) * 8
                 print(f"Gemini yoğun (503), {wait_sec} sn sonra tekrar deneniyor...")
                 time.sleep(wait_sec)
             else:
@@ -261,7 +261,7 @@ def main():
     word_timings = asyncio.run(generate_voiceover(script_text, audio_path))
     audio_duration_sec = word_timings[-1]["end"] if word_timings else 0.0
 
-   backgrounds = download_multiple_pixabay_videos(search_query or "motivation", OUTPUT_DIR, count=3)
+    backgrounds = download_multiple_pixabay_videos(search_query or "motivation", OUTPUT_DIR, count=3)
     if not backgrounds:
         raise RuntimeError("Pixabay üzerinde uygun dikey video bulunamadı.")
 
