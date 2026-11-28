@@ -1,5 +1,6 @@
 import os
 import json
+from random import random
 import time
 import asyncio
 import requests
@@ -204,6 +205,46 @@ def download_multiple_pixabay_videos(query: str, output_dir: str, count: int = 3
         downloaded_files.append(f"assets/{filename}")
 
     return downloaded_files
+import urllib.parse
+import subprocess
+
+
+def download_pollinations_backgrounds(query: str, output_dir: str, count: int = 3) -> list[str]:
+    prompts = [
+        f"dark moody cinematic vertical scene representing {query}, dramatic rim lighting, deep shadows, minimalist dopamine neuroscience vibe, 4k",
+        f"abstract glowing neural pathways and calm night atmosphere for {query}, moody indigo and amber lighting, ultra detailed vertical composition",
+        f"solitary focused person in dark atmospheric room contemplating {query}, subtle motion feel, cinematic contrast, vertical frame"
+    ]
+    downloaded_files = []
+    for idx, p in enumerate(prompts[:count], start=1):
+        encoded_prompt = urllib.parse.quote(p)
+        seed = random.randint(1000, 999999)
+        img_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1080&height=1920&seed={seed}&nologo=true"
+        temp_img = os.path.join(output_dir, f"poll_{idx}.jpg")
+        out_mp4 = os.path.join(output_dir, f"background_{idx}.mp4")
+        try:
+            resp = requests.get(img_url, timeout=60)
+            resp.raise_for_status()
+            with open(temp_img, "wb") as f:
+                f.write(resp.content)
+            subprocess.run(
+                [
+                    "ffmpeg", "-y", "-loop", "1", "-i", temp_img,
+                    "-t", "15", "-vf", "scale=1080:1920,zoompan=z='min(zoom+0.0008,1.12)':d=375:s=1080x1920:fps=25",
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", out_mp4
+                ],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            if os.path.exists(temp_img):
+                os.remove(temp_img)
+            downloaded_files.append(f"assets/background_{idx}.mp4")
+        except Exception as err:
+            print(f"Pollinations görsel {idx} alınamadı ({err}), Pixabay yedeğine geçiliyor...")
+            fallback = download_multiple_pixabay_videos(query, output_dir, count=count)
+            return fallback
+    return downloaded_files
 def main():
     topic = os.environ.get("VIDEO_TOPIC", "habitos para vencer la procrastinacion")
     print("1. Gemini ile İspanyolca senaryo üretiliyor...")
@@ -220,6 +261,10 @@ def main():
     word_timings = asyncio.run(generate_voiceover(script_text, audio_path))
     audio_duration_sec = word_timings[-1]["end"] if word_timings else 0.0
 
+    backgrounds = download_pollinations_backgrounds(search_query or topic, OUTPUT_DIR, count=3)
+    if not backgrounds:
+        raise RuntimeError("Arka plan videoları oluşturulamadı.")
+
     meta_path = os.path.join(OUTPUT_DIR, "script.json")
     with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(
@@ -227,7 +272,7 @@ def main():
                 "title": payload.get("title", "Short"),
                 "script": script_text,
                 "words": words,
-                "description": payload.get("description") or f"{payload.get('title', 'Efecto Dopamina')} — #EfectoDopamina #Motivacion #Habitos #Shorts",
+                "description": payload.get("description") or f"{payload.get('title', 'Efecto Dopamina')} #EfectoDopamina",
                 "wordTimings": word_timings,
                 "audioDurationSec": audio_duration_sec,
                 "backgrounds": backgrounds,
@@ -236,9 +281,6 @@ def main():
             ensure_ascii=False,
             indent=2,
         )
-backgrounds = download_multiple_pixabay_videos("motivation", OUTPUT_DIR, count=3)
-if not backgrounds:
-        raise RuntimeError("Pixabay üzerinde uygun dikey video bulunamadı.")
 
 print("Tüm varlıklar başarıyla hazırlandı!")
 
