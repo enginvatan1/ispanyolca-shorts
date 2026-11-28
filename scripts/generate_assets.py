@@ -218,7 +218,7 @@ def download_pollinations_backgrounds(query: str, output_dir: str, count: int = 
     downloaded_files = []
     for idx, p in enumerate(prompts[:count], start=1):
         encoded_prompt = urllib.parse.quote(p)
-        seed = random.randint(1000, 999999)
+        seed = (int(time.time() * 1000) + idx * 7919) % 900000 + 1000
         img_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1080&height=1920&seed={seed}&nologo=true"
         temp_img = os.path.join(output_dir, f"poll_{idx}.jpg")
         out_mp4 = os.path.join(output_dir, f"background_{idx}.mp4")
