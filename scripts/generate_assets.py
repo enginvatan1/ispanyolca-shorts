@@ -261,9 +261,9 @@ def main():
     word_timings = asyncio.run(generate_voiceover(script_text, audio_path))
     audio_duration_sec = word_timings[-1]["end"] if word_timings else 0.0
 
-    backgrounds = download_pollinations_backgrounds(search_query or topic, OUTPUT_DIR, count=3)
+   backgrounds = download_multiple_pixabay_videos(search_query or "motivation", OUTPUT_DIR, count=3)
     if not backgrounds:
-        raise RuntimeError("Arka plan videoları oluşturulamadı.")
+        raise RuntimeError("Pixabay üzerinde uygun dikey video bulunamadı.")
 
     meta_path = os.path.join(OUTPUT_DIR, "script.json")
     with open(meta_path, "w", encoding="utf-8") as f:
